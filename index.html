@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduler</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">Activity Scheduler</h1>
+            <form id="schedulerForm">
+                <div class="field">
+                    <label class="label">Wake-up Time</label>
+                    <div class="control">
+                        <input class="input" type="time" id="wake_time" required>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Bed Time</label>
+                    <div class="control">
+                        <input class="input" type="time" id="bed_time" required>
+                    </div>
+                </div>
+                <div id="activityFields"></div>
+                <button class="button is-link" type="button" onclick="addActivity()">Add Activity</button>
+                <button class="button is-primary" type="submit">Generate Schedule</button>
+            </form>
+            <div id="scheduleOutput" class="content"></div>
+        </div>
+    </section>
+    <script>
+        let activityCount = 0;
+
+        function addActivity() {
+            activityCount++;
+            const activityFields = document.getElementById('activityFields');
+            const newActivity = `
+                <div class="field">
+                    <label class="label">Activity ${activityCount}</label>
+                    <div class="control">
+                        <input class="input" type="text" name="activity" placeholder="Activity Name" required>
+                    </div>
+                    <label class="label">Duration (minutes)</label>
+                    <div class="control">
+                        <input class="input" type="number" name="duration" placeholder="Duration" required>
+                    </div>
+                </div>
+            `;
+            activityFields.insertAdjacentHTML('beforeend', newActivity);
+        }
+
+        document.getElementById('schedulerForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const activities = [];
+            const durations = [];
+            document.querySelectorAll('[name="activity"]').forEach(input => activities.push(input.value));
+            document.querySelectorAll('[name="duration"]').forEach(input => durations.push(input.value));
+            const wake_time = document.getElementById('wake_time').value;
+            const bed_time = document.getElementById('bed_time').value;
+
+            fetch('/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ activities, durations, wake_time, bed_time })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const scheduleOutput = document.getElementById('scheduleOutput');
+                scheduleOutput.innerHTML = '<h2 class="title">Schedule</h2><ul>' + data.schedule.map(item => `<li>${item}</li>`).join('') + '</ul>';
+                
+                // Add a save schedule button
+                const saveButton = document.createElement('button');
+                saveButton.textContent = 'Save Schedule';
+                saveButton.classList.add('button', 'is-success');
+                scheduleOutput.appendChild(saveButton);
+
+                // Add event listener to save button
+                saveButton.addEventListener('click', () => {
+                    try {
+                        // Create a blob with the schedule data
+                        const blob = new Blob([data.schedule.join('\n')], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'schedule.txt';
+                        a.click();
+
+                        // Show alert
+                        alert('Schedule saved successfully!');
+                    } catch (error) {
+                        // Show error alert
+                        alert('Error saving schedule: ' + error.message);
+                    }
+                });
+
+                // Add a turn on alarms button
+                const alarmsButton = document.createElement('button');
+                alarmsButton.textContent = 'Turn On Alarms';
+                alarmsButton.classList.add('button', 'is-warning');
+                scheduleOutput.appendChild(alarmsButton);
+
+                // Add event listener to alarms button
+                alarmsButton.addEventListener('click', () => {
+                    // Get the schedule data
+                    const scheduleData = data.schedule;
+
+                    // Loop through each event in the schedule
+                    scheduleData.forEach((event, index) => {
+                        // Extract the start and end times from the event string
+                        const startTime = event.split('-')[0].trim();
+                        const endTime = event.split('-')[1].trim();
+
+                        // Calculate the timeout for the start notification
+                        const startTimeout = getTimeout(new Date(), startTime);
+                        const endTimeout = getTimeout(new Date(), endTime);
+
+                        // Create a notification for the start of the event
+                        setTimeout(() => {
+                            new Notification(`Event ${index + 1} Started`, {
+                                body: event,
+                                icon: 'https://example.com/icon.png',
+                                tag: `event-${index}-start`
+                            });
+                        }, startTimeout);
+
+                        // Create a notification for the end of the event
+                        setTimeout(() => {
+                            new Notification(`Event ${index + 1} Ended`, {
+                                body: event,
+                                icon: 'https://example.com/icon.png',
+                                tag: `event-${index}-end`
+                            });
+                        }, endTimeout);
+                    });
+                });
+            });
+        });
+
+        // Helper function to calculate the timeout between the current time and a target time
+        function getTimeout(currentDate, targetTime) {
+            const [targetHours, targetMinutes] = targetTime.split(':').map(Number);
+            const targetDate = new Date(currentDate);
+            targetDate.setHours(targetHours, targetMinutes, 0, 0);
+            let timeout = targetDate - currentDate;
+            if (timeout < 0) {
+                timeout += 24 * 60 * 60 * 1000; // Add a day if the time is in the past
+            }
+            return timeout;
+        }
+    </script>
+</body>
+</html>

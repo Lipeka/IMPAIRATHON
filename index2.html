@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service People Role Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">Service People Role Game</h1>
+            <div id="game-area" class="content">
+                <button class="button is-primary" onclick="startGame()">Start Game</button>
+                <div id="scenario-description"></div>
+                <div id="scenario-image"></div>
+                <div id="response-result"></div>
+                <button class="button is-link" onclick="listenResponse()">Say Role Name</button>
+            </div>
+        </div>
+    </section>
+    <script>
+        function startGame() {
+            fetch('/get_scenario')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('scenario-description').innerText = data.description;
+                    document.getElementById('scenario-image').innerHTML = `<img src="${data.image}" alt="${data.role}" />`;
+                    window.correctAnswer = data.role;
+                });
+        }
+
+        function listenResponse() {
+            fetch('/static/speech_recognition.js')
+                .then(() => {
+                    const recognition = new webkitSpeechRecognition();
+                    recognition.lang = 'en-US';
+                    recognition.start();
+                    recognition.onresult = function(event) {
+                        const userResponse = event.results[0][0].transcript;
+                        fetch('/evaluate_response', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ response: userResponse, correct_answer: window.correctAnswer })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('response-result').innerText = data.result + " " + data.dialogue;
+                        });
+                    };
+                });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+streamlit
+pyttsx3
+SpeechRecognition
+pyaudio

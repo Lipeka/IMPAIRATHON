@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>AlphaBaby</title>
+	<link rel="stylesheet" href="libs/jquery.mobile-1.2.0.min.css" />
+	<link rel="stylesheet" href="styles/style.css" />
+	<script src="libs/jquery-1.8.2.min.js"></script>
+	<script src="libs/jquery.mobile-1.2.0.min.js"></script>
+	<script src="scripts/random.js"></script>
+	<script type="text/javascript" charset="utf-8" src="scripts/xml.js"></script>
+	<meta charset="utf-8" /> 
+	<meta name="viewport" content="width=device-width, initial-scale=1"> 
+
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$( "#popupYes" ).on({
+					popupafterclose: function(event, ui) {
+					$('#letterList').empty();
+					game();
+			   }
+			});
+			game();
+		});
+			// Get an uppercase letter for the element to find
+		function game(){
+			var lower = false;		
+			var solution = getRandomLetter(lower);
+			$("#maj").html(solution.toLowerCase());	
+			// Get 4 lowercase letters including the solution
+			var letterList = getRandomList(4, solution, lower);
+			var src = '';
+
+			for( var i = 0 ; i < letterList.length ; ++i ) {
+				// Align in two lines of two elements (adding <br/>)
+				// Generate lowercase letters with calls to win() and lose() functions depending on whether the current letter is the solution
+				switch( i % 2) {
+					case 0:
+						src += '<div class="ui-grid-a"><div class="ui-block-a"><a class="min_game2">'+ letterList[i] +'</a></div>';
+					break;
+					case 1: 
+						src += '<div class="ui-block-b"><a class="min_game2">'+ letterList[i] +'</a></div></div>';
+				}
+			}
+
+			$('#letterList').append(src);
+				$('#letterList a').click(function(){
+				if($(this).html() == solution){
+					$(this).css("border","3px solid green");
+					var date=getCurrentDate();
+					writeScoreToXml(3,date,1);
+					$("#popupYes").popup("open",{positionTo:"#maj"});				
+				}
+				else {
+					$(this).css("border","3px solid red");
+					$(this).css("opacity","0.5");
+				}
+			});
+		 
+		}
+
+	</script>
+</head>
+<body>
+<div data-role="page">
+	<div data-role="header">
+		<a href="#" data-rel="back" data-icon="arrow-l" data-add-back-btn="true" data-icon="back">Back</a>
+		<h1>- Find the uppercase -</h1>
+		<a href="progress.html#3" rel="external" data-icon="star">Scores</a>
+	</div>	
+	
+	<div data-role="content" data-theme="c" class="center_block">
+		<!--<a href="#" data-role="button" data-icon="star" data-theme="b">Press the correct lowercase</a>-->
+		<a class="min_game2" id="maj"></a>
+		<div id="letterList"></div>
+		<div id="popup">
+	<div data-role="popup" id="popupYes" data-theme="a" data-overlay-theme="a">
+		<p>Well done!<p>
+	</div></div>
+	</div>
+	
+</div>
+</body>
+
+</html>

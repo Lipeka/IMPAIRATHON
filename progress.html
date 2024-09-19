@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<title>AlphaBaby</title>
+	<meta charset="utf-8" /> 
+	<meta name="viewport" content="width=device-width, initial-scale=1"> 
+	<link rel="stylesheet" type="text/css" href="libs/jquery.jqplot.css" />
+  	<link rel="stylesheet" href="styles/style.css" />	
+	<link rel="stylesheet" href="libs/jquery.mobile-1.2.0.min.css" />	
+	<script src="libs/jquery-1.8.2.min.js"></script>
+	<script src="libs/jquery.mobile-1.2.0.min.js"></script>
+	
+	  <script language="javascript" type="text/javascript" src="libs/jquery.jqplot.min.js"></script>
+	  <script language="javascript" type="text/javascript" src="libs/jqplot.dateAxisRenderer.min.js"></script>
+	  <script language="javascript" type="text/javascript" src="scripts/xml.js"></script>
+
+  <script type="text/javascript">
+
+$(document).ready(
+	function(){
+		// writeScoreToXml(1,'2012-06-11',4);
+		// writeScoreToXml(1,'2012-06-12',6);
+		// writeScoreToXml(2,'2012-06-12',0);
+		// writeScoreToXml(2,'2012-06-13',1);
+		// writeScoreToXml(2,'2012-06-15',10);
+		// writeScoreToXml(2,'2012-06-18',8);
+		// writeScoreToXml(4,'2012-06-12',0);
+		// writeScoreToXml(4,'2012-06-13',5);
+		var tab = ($(location).attr('href').split('#')[1] != null) ? $(location).attr('href').split('#')[1] : 1;
+		loadGraph(tab);
+	}
+);
+
+function loadGraph(id){
+	var tab =  new Array();				
+	getValuesFromXml(tab,id);	
+	$('#graph').empty();
+ 		var plot1 = $.jqplot('graph', [tab],  {
+		      title:'Progression',
+		      gridPadding:{right:35},
+		      axes:{
+		        xaxis:{
+		          renderer:$.jqplot.DateAxisRenderer,
+		          tickOptions:{formatString:' %#d-%b-%y'}	          
+		        }
+		      },
+		      series:[{lineWidth:4, markerOptions:{style:'square'}}]
+		  });
+		  //clearData();
+}
+
+function clearAll(){
+	clearData();
+	$('#graph').empty();
+}
+
+
+   </script>
+
+</head>
+
+
+<body>
+<header data-role="header" >
+	<a href="#" data-rel="back" data-icon="arrow-l" data-add-back-btn="true">Retour</a>
+	<h1><span></span>- Progression -</h1>
+	<a href="#" data-icon="delete" onclick="clearAll();">Clear Data</a>
+</header>
+
+<nav data-role="navbar">
+	<ul >	
+		<li><a href="#1" onclick="loadGraph(1);">Ecouter</a></li>
+		<li><a href="#2"  onclick="loadGraph(2);">Ordre Alphabétique</a></li>
+		<li><a href="#3"  onclick="loadGraph(3);">Majuscules</a></li>
+		<li><a href="#4"  onclick="loadGraph(4);">Minuscules</a></li>
+		<li><a href="#5"  onclick="loadGraph(5);">Dessiner</a></li>
+	</ul>
+	
+</nav>
+<section data-role="content"> 
+<div id="graph"></div>
+</section>
+</body>
+
+</html>
